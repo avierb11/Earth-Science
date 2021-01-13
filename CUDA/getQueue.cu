@@ -180,8 +180,8 @@ int main(void)
 {
   const int threadsPerBlock = 256;
 
-  const int length = 1024;
-  const int depth = 1024;
+  const int length = 1024*2;
+  const int depth = 1024*2;
   const int arrayLength = length*depth;
   const int numBlocks = arrayLength/threadsPerBlock;
 
@@ -207,7 +207,7 @@ int main(void)
   std::cout << heads[0] << std::endl;
 
   auto start = high_resolution_clock::now();
-  for (int i = 0; i < 1000; i++)
+  for (int i = 0; i < 10000; i++)
   {
     getQueueSingle<<<numBlocks, threadsPerBlock>>>(heads, queue, arrayLength, length);
     cudaDeviceSynchronize();
