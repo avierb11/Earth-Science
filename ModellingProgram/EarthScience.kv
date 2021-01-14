@@ -1,13 +1,61 @@
+<MenuScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        Label:
+            text: 'This is the menu screen'
+            font_size: 36
+        Button:
+            text: 'To value screen'
+            font_size: 36
+            on_release:
+                root.manager.transition.direction = 'left'
+                root.manager.current = 'value'
+        Button:
+            text: 'To map screen'
+            font_size: 36
+            on_release:
+                root.manager.transition.direction = 'left'
+                root.manager.current = 'map'
+        Button:
+            text: 'Third Button'
+            font_size: 36
 
-BoxLayout:
-    orientation: 'vertical'
-    padding: 10
-    spacing: 10
-    Label:
-        text: 'This is the title screen'
+<ValueScreen>:
     Button:
-        text: 'First Button'
+        size_hint: .1, .1
+        text: '<='
+        on_release:
+            root.manager.transition.direction = 'right'
+            root.manager.current = 'menu'
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+        Label:
+            text: 'This is the value screen'
+            font_size: 36
+
+<MapScreen>:
     Button:
-        text: 'Second Button'
-    Button:
-        text: 'Third Button'
+        size_hint: .1, .1
+        text: '<='
+        on_release:
+            root.manager.transition.direction = 'right'
+            root.manager.current = 'menu'
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        BoxLayout:
+            size_hint: 1, .7
+            id: figureBoxLayout
+
+        Label:
+            size_hint: 1,.3
+            font_size: 36
+
+            text: 'This is the label under the plot'
