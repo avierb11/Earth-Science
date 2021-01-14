@@ -1,7 +1,14 @@
-import ctypes
-import pathlib
+from ctypes import cdll
+lib = cdll.LoadLibrary('./libfoo.so')
 
 
-if __name__=="__main__":
-    libname = pathlib.Path().absolute() / "firstlib.so"
-    c_lib = ctypes.CDLL("C:/users/avier/Documents/Github/Earth-Science/C++/PythonLibraries/firstlib.so")
+class Foo(object):
+    def __init__(self):
+        self.obj = lib.Foo_new()
+
+    def bar(self):
+        lib.Foo_bar(self.obj)
+
+
+f = Foo()
+f.bar()
