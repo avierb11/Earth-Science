@@ -14,6 +14,9 @@ void getQueue(vector< vector<float> > &heads, vector< vector< float> > &queue);
 void printVector(vector< vector<float> > &vec);
 void printVector1D(vector<float> &vec, int width, int depth);
 void getQueue1D(vector<float> &heads, vector<float> &queue, int stride);
+void getDischarge2D(float *heads, float *queue, float *conductivity, float *heights, int stride, float xScale = 1.0f, float yScale = 1.0f);
+void printArray(float *x, int length, int stride);
+
 
 int main()
 {
@@ -30,7 +33,7 @@ int main()
 
   // 1D array timing
   auto start2 = high_resolution_clock::now();
-  for (int i = 0; i < 1000; i++)
+  for (int i = 0; i < 1; i++)
   {
     getQueue1D(heads2, queue2, length);
   }
@@ -41,6 +44,38 @@ int main()
   std::cout << "Total execution time for 1D array: " << time2 << std::endl;
 
   //delete []point;
+
+
+  // Now, test the real update heads function
+  float *x;
+  float *y;
+  const int width = 4;
+  const int stride = 4;
+  const int shortLength = width*stride;
+
+  std::cout << "Made it to point 1" << std::endl;
+
+  /*
+  for (int i = 0; i < stride; i++)
+  {
+      x[stride*i + i] = 1.0f;
+  }*/
+  x[0] = 1.0f;
+  x[5] = 1.0f;
+  x[10] = 1.0f;
+  x[15] = 1.0f;
+
+  std::cout << "Made it to point 2" << std::endl;
+
+  for (int i = 0; i < shortLength; i++)
+  {
+      y[i] = 0.0f;
+  }
+
+  std::cout << "Made it to point 3" << std::endl;
+
+  std::cout << "x: " << std::endl;
+  printArray(x, width, stride);
 
   std::cout << "made it to the end of the program" << std::endl;
 
@@ -198,4 +233,159 @@ void printVector1D(vector<float> &vec, int width, int depth)
     }
     std::cout << std::endl;
   }
+}
+
+void getDischarge2D(float *heads, float *queue, float *conductivity, float *heights, int length, int stride, float xScale = 1.0f, float yScale = 1.0f)
+{
+    int depth = length/stride;
+    int sizeIndex = length - 1;
+
+
+    // Main body
+    for (int row = 1; row <= depth - 2; row++)
+    {
+      for (int i = stride*row + 1; i < stride*(row + 1) - 1; i++)
+      {
+        queue[i] =  (heads[i - stride] - heads[i])*heights[i]/yScale;    // Up
+        queue[i] += heads[i + stride] - heads[i]*heights[i]/yScale;    // Down
+        queue[i] += heads[i - 1] - heads[i]*heights[i]/xScale;    // Left
+        queue[i] += heads[i + 1] - heads[i]*heights[i]/xScale;    // Right
+      }
+    }
+
+    //std::cout << "Made it past block 1" << std::endl;
+
+    // Top and bottom edges
+    for (int i = 1; i < stride - 1; i++)
+    {
+      // Top
+      queue[i] = (heads[i + stride] - heads[i])*heights[i]/yScale;   // Down
+      queue[i] += (heads[i - 1] - heads[i])*heights[i]/xScale;   // left
+      queue[i] += (heads[i + 1] - heads[i])*heights[i]/xScale;   // Right
+
+      // Bottom
+      queue[sizeIndex - i] =  (heads[sizeIndex - stride - i] - heads[i])*heights[i]/yScale;    // Down
+      queue[sizeIndex - i] += (heads[sizeIndex - i - 1] - heads[i])*heights[i]/xScale;   // Left
+      queue[sizeIndex - i] += (heads[sizeIndex - i + 1] - heads[i])*heights[i]/xScale;   // Right
+    }
+
+    //std::cout << "Made it past block 2" << std::endl;
+
+    // Left and right edges
+    for (int row = 1; row < stride - 1; row++)
+    {
+        // Left
+        queue[row*stride] = (heads[row*stride + 1] - heads[row*stride])*heights[row*stride]/xScale;    // Right
+        queue[row*stride] += (heads[(row - 1)*stride] - heads[row*stride])*heights[row*stride]/yScale;    // Up
+        queue[row*stride] += (heads[(row + 1)*stride] - heads[row*stride])*heights[row*stride]/yScale;    // Down
+
+        // Right
+        queue[stride*(row + 1) - 1] =  (heads[stride*(row + 1) - 2] - heads[stride*(row + 1) - 1])*heights[row*stride]/xScale;    // Left
+        queue[stride*(row + 1) - 1] += (heads[stride*(row + 2) - 1] - heads[stride*(row + 1) - 1])*heights[row*stride]/yScale;    // Up
+        queue[stride*(row + 1) - 1] += (heads[stride*(row) - 1] - heads[stride*(row + 1) - 1])*heights[row*stride]/yScale;    // Down
+    }
+
+    //std::cout << "Made it past block 3" << std::endl;
+
+    // Corners
+    queue[0] =  (heads[stride] - heads[0])*heights[0]/yScale;   // Down
+    queue[0] += (heads[1] - heads[0])*heights[0]/xScale;        // Right
+
+    queue[stride-1] =  (heads[2*stride - 1] - heads[stride - 1])*heights[stride-1]/yScale; // Down
+    queue[stride-1] += (heads[stride - 2]   - heads[stride - 1])*heights[stride-1]/xScale;       // Left
+
+    queue[sizeIndex - stride + 1] =  (heads[sizeIndex - 2*stride + 1] - heads[sizeIndex - stride + 1])*heights[sizeIndex - stride + 1]/yScale;   // Up
+    queue[sizeIndex - stride + 1] += (heads[sizeIndex - stride + 2] - heads[sizeIndex - stride + 1])*heights[sizeIndex - stride + 1]/xScale;     // Right
+
+    queue[sizeIndex] =  (heads[sizeIndex - stride] - heads[sizeIndex])*heights[sizeIndex]/yScale;   // Up
+    queue[sizeIndex] += (heads[sizeIndex - 1] - heads[sizeIndex])*heights[sizeIndex]/xScale;        // Left
+
+
+    // Now, we have the queue, so add the queue to the heads to update it
+}
+
+void updateHeads2D(float *heads, float *queue, float *conductivity, float *heights, float *Ss,  int length, int stride, float timeStep=1.0f, float xScale = 1.0f, float yScale = 1.0f)
+{
+    int depth = length/stride;
+    int sizeIndex = length - 1;
+
+
+    // Main body
+    for (int row = 1; row <= depth - 2; row++)
+    {
+      for (int i = stride*row + 1; i < stride*(row + 1) - 1; i++)
+      {
+        queue[i] =  (heads[i - stride] - heads[i])*timeStep*heights[i]/yScale;    // Up
+        queue[i] += (heads[i + stride] - heads[i])*timeStep*heights[i]/yScale;    // Down
+        queue[i] += (heads[i - 1] - heads[i])*timeStep*heights[i]/xScale;    // Left
+        queue[i] += (heads[i + 1] - heads[i])*timeStep*heights[i]/xScale;    // Right
+      }
+    }
+
+    //std::cout << "Made it past block 1" << std::endl;
+
+    // Top and bottom edges
+    for (int i = 1; i < stride - 1; i++)
+    {
+      // Top
+      queue[i] = (heads[i + stride] - heads[i])*timeStep*heights[i]/yScale;   // Down
+      queue[i] += (heads[i - 1] - heads[i])*timeStep*heights[i]/xScale;   // left
+      queue[i] += (heads[i + 1] - heads[i])*timeStep*heights[i]/xScale;   // Right
+
+      // Bottom
+      queue[sizeIndex - i] =  (heads[sizeIndex - stride - i] - heads[i])*timeStep*heights[i]/yScale;    // Down
+      queue[sizeIndex - i] += (heads[sizeIndex - i - 1] - heads[i])*timeStep*heights[i]/xScale;   // Left
+      queue[sizeIndex - i] += (heads[sizeIndex - i + 1] - heads[i])*timeStep*heights[i]/xScale;   // Right
+    }
+
+    //std::cout << "Made it past block 2" << std::endl;
+
+    // Left and right edges
+    for (int row = 1; row < stride - 1; row++)
+    {
+        // Left
+        queue[row*stride] = (heads[row*stride + 1] - heads[row*stride])*timeStep*heights[row*stride]/xScale;    // Right
+        queue[row*stride] += (heads[(row - 1)*stride] - heads[row*stride])*timeStep*heights[row*stride]/yScale;    // Up
+        queue[row*stride] += (heads[(row + 1)*stride] - heads[row*stride])*timeStep*heights[row*stride]/yScale;    // Down
+
+        // Right
+        queue[stride*(row + 1) - 1] =  (heads[stride*(row + 1) - 2] - heads[stride*(row + 1) - 1])*timeStep*heights[row*stride]/xScale;    // Left
+        queue[stride*(row + 1) - 1] += (heads[stride*(row + 2) - 1] - heads[stride*(row + 1) - 1])*timeStep*heights[row*stride]/yScale;    // Up
+        queue[stride*(row + 1) - 1] += (heads[stride*(row) - 1] - heads[stride*(row + 1) - 1])*timeStep*heights[row*stride]/yScale;    // Down
+    }
+
+    //std::cout << "Made it past block 3" << std::endl;
+
+    // Corners
+    queue[0] =  (heads[stride] - heads[0])*timeStep*heights[0]/yScale;   // Down
+    queue[0] += (heads[1] - heads[0])*timeStep*heights[0]/xScale;        // Right
+
+    queue[stride-1] =  (heads[2*stride - 1] - heads[stride - 1])*timeStep*heights[stride-1]/yScale; // Down
+    queue[stride-1] += (heads[stride - 2]   - heads[stride - 1])*timeStep*heights[stride-1]/xScale;       // Left
+
+    queue[sizeIndex - stride + 1] =  (heads[sizeIndex - 2*stride + 1] - heads[sizeIndex - stride + 1])*timeStep*heights[sizeIndex - stride + 1]/yScale;   // Up
+    queue[sizeIndex - stride + 1] += (heads[sizeIndex - stride + 2] - heads[sizeIndex - stride + 1])*timeStep*heights[sizeIndex - stride + 1]/xScale;     // Right
+
+    queue[sizeIndex] =  (heads[sizeIndex - stride] - heads[sizeIndex])*timeStep*heights[sizeIndex]/yScale;   // Up
+    queue[sizeIndex] += (heads[sizeIndex - 1] - heads[sizeIndex])*timeStep*heights[sizeIndex]/xScale;        // Left
+
+
+    // Now, we have the total volume of water, so convert to head change
+    for (int i = 0; i < length; i++)
+    {
+        queue[i] *= 1/(Ss[i] * heights[i] * xScale * yScale);
+        heads[i] += queue[i];
+    }
+}
+
+void printArray(float *x, int length, int stride)
+{
+    for (int i = 0; i < length; i++)
+    {
+        for (int j = 0; j < stride; j++)
+        {
+            std::cout << x[stride*i + j] << " ";
+        }
+        std::cout << std::endl;
+    }
 }
