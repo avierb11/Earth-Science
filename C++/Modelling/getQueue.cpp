@@ -16,66 +16,51 @@ void printVector1D(vector<float> &vec, int width, int depth);
 void getQueue1D(vector<float> &heads, vector<float> &queue, int stride);
 void getDischarge2D(float *heads, float *queue, float *conductivity, float *heights, int stride, float xScale = 1.0f, float yScale = 1.0f);
 void printArray(float *x, int length, int stride);
+void getQueue1Dptr(float *heads, float *queue, int length, int stride);
 
 
 int main()
 {
-  const int depth = 1024;
-  const int length = 1024;
+  const int depth = 8192*2;
+  const int length = 8192*2;
+  const int totalLength = depth*length;
 
   // 1D vector
+  /*
   vector<float> heads2 (length*depth, 0);
   for (int i = 0; i < depth*length; i += (length + 1))
   {
     heads2[i] = 1.0f;
   }
   vector<float> queue2 (length*depth, 0);
+  */
+  float *heads = new float [length*depth];
+  float *queue = new float[length*depth];
+
+  for (int i = 0; i < length*depth; i++)
+  {
+      heads[i] = 0;
+      queue[i] = 0;
+  }
+
+  for (int i = 0; i < length; i++)
+  {
+      heads[i*depth + i] = 1.0f;
+  }
 
   // 1D array timing
-  auto start2 = high_resolution_clock::now();
+  auto start = high_resolution_clock::now();
   for (int i = 0; i < 1; i++)
   {
-    getQueue1D(heads2, queue2, length);
+    getQueue1Dptr(heads, queue, totalLength, length);
   }
-  auto stop2 = high_resolution_clock::now();
+  auto stop = high_resolution_clock::now();
 
-  auto duration2 = duration_cast<microseconds>(stop2 - start2);
-  float time2 = (float)duration2.count()/1000000.0f;
-  std::cout << "Total execution time for 1D array: " << time2 << std::endl;
+  auto duration = duration_cast<microseconds>(stop - start);
+  float time = (float)duration.count()/1000000.0f;
+  std::cout << "Total execution time for 1D array: " << time << std::endl;
 
   //delete []point;
-
-
-  // Now, test the real update heads function
-  float *x;
-  float *y;
-  const int width = 4;
-  const int stride = 4;
-  const int shortLength = width*stride;
-
-  std::cout << "Made it to point 1" << std::endl;
-
-  /*
-  for (int i = 0; i < stride; i++)
-  {
-      x[stride*i + i] = 1.0f;
-  }*/
-  x[0] = 1.0f;
-  x[5] = 1.0f;
-  x[10] = 1.0f;
-  x[15] = 1.0f;
-
-  std::cout << "Made it to point 2" << std::endl;
-
-  for (int i = 0; i < shortLength; i++)
-  {
-      y[i] = 0.0f;
-  }
-
-  std::cout << "Made it to point 3" << std::endl;
-
-  std::cout << "x: " << std::endl;
-  printArray(x, width, stride);
 
   std::cout << "made it to the end of the program" << std::endl;
 
@@ -148,6 +133,73 @@ void getQueue1D(vector<float> &heads, vector<float> &queue, int stride)
 {
   int depth = heads.size()/stride;
   int sizeIndex = heads.size() - 1;
+
+
+  // Main body
+  for (int row = 1; row <= depth - 2; row++)
+  {
+    for (int i = stride*row + 1; i < stride*(row + 1) - 1; i++)
+    {
+      queue[i] =  heads[i - stride] - heads[i];    // Up
+      queue[i] += heads[i + stride] - heads[i];    // Down
+      queue[i] += heads[i - 1] - heads[i];    // Left
+      queue[i] += heads[i + 1] - heads[i];    // Right
+    }
+  }
+
+  //std::cout << "Made it past block 1" << std::endl;
+
+  // Top and bottom edges
+  for (int i = 1; i < stride - 1; i++)
+  {
+    // Top
+    queue[i] = heads[i + stride] - heads[i];   // Down
+    queue[i] += heads[i - 1] - heads[i];   // left
+    queue[i] += heads[i + 1] - heads[i];   // Right
+
+    // Bottom
+    queue[sizeIndex - i] = heads[sizeIndex - stride - i] - heads[i];    // Down
+    queue[sizeIndex - i] += heads[sizeIndex - i - 1] - heads[i];   // Left
+    queue[sizeIndex - i] += heads[sizeIndex - i + 1] - heads[i];   // Right
+  }
+
+  //std::cout << "Made it past block 2" << std::endl;
+
+  // Left and right edges
+  for (int row = 1; row < stride - 1; row++)
+  {
+      // Left
+      queue[row*stride] = heads[row*stride + 1] - heads[row*stride];    // Right
+      queue[row*stride] += heads[(row - 1)*stride] - heads[row*stride];    // Up
+      queue[row*stride] += heads[(row + 1)*stride] - heads[row*stride];    // Down
+
+      // Right
+      queue[stride*(row + 1) - 1] =  heads[stride*(row + 1) - 2] - heads[stride*(row + 1) - 1];    // Left
+      queue[stride*(row + 1) - 1] += heads[stride*(row + 2) - 1] - heads[stride*(row + 1) - 1];    // Up
+      queue[stride*(row + 1) - 1] += heads[stride*(row) - 1] - heads[stride*(row + 1) - 1];    // Down
+  }
+
+  //std::cout << "Made it past block 3" << std::endl;
+
+  // Corners
+  queue[0] =  heads[stride] - heads[0];
+  queue[0] += heads[1] - heads[0];
+
+  queue[stride-1] =  heads[2*stride - 1] - heads[stride - 1];
+  queue[stride-1] += heads[stride - 2] - heads[stride - 1];
+
+  queue[sizeIndex - stride + 1] =  heads[sizeIndex - 2*stride + 1] - heads[sizeIndex - stride + 1];
+  queue[sizeIndex - stride + 1] += heads[sizeIndex - stride + 2] - heads[sizeIndex - stride + 1];
+
+  queue[sizeIndex] =  heads[sizeIndex - stride] - heads[sizeIndex];
+  queue[sizeIndex] += heads[sizeIndex - 1] - heads[sizeIndex];
+
+}
+
+void getQueue1Dptr(float *heads, float *queue, int length, int stride)
+{
+  int depth = length/stride;
+  int sizeIndex = length - 1;
 
 
   // Main body
