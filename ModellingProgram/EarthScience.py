@@ -17,9 +17,12 @@ class ValueScreen(Screen):
 class MapScreen(Screen):
     #plot = plt
     #fig = FigureCanvasKivyAgg(figure = plt.gcf(),id='mapFigure')
+    '''
     def __init__(self, **kwargs):
-        self.ids['figureBoxLayout'].add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        #self.ids['figureBoxLayout'].add_widget(FigureCanvasKivyAgg(plt.gcf()))
         self.name = 'map'
+    '''
+    pass
 
 class EarthScience(App):
     def build(self):
