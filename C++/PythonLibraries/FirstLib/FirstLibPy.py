@@ -1,11 +1,15 @@
-print('Starting')
 from ctypes import cdll
 try:
-    print('Before trying')
     lib = cdll.LoadLibrary('./firstlib.so')
-    print('After tried')
+    print('successfully loaded library')
 except:
     print('Error :(')
+
+try:
+    lib2 = cdll.LoadLibrary('./test.so')
+    print("successfully loaded test.so")
+except:
+    print("didn't load test2 :(")
 
 print("Made it!")
 

@@ -1,5 +1,3 @@
-#include <iostream>
-
 extern "C" void getQueue1Dptr(float *heads, float *queue, int length, int stride)
 {
   int depth = length/stride;
@@ -65,9 +63,4 @@ extern "C" void getQueue1Dptr(float *heads, float *queue, int length, int stride
   queue[sizeIndex] =  heads[sizeIndex - stride] - heads[sizeIndex];
   queue[sizeIndex] += heads[sizeIndex - 1] - heads[sizeIndex];
 
-}
-
-extern "C" void check()
-{
-  std::cout << "So far so good" << std::endl;
 }

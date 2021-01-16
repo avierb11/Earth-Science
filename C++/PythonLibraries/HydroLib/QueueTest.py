@@ -1,18 +1,16 @@
-import ctypes
-from ctypes import c_void_p as ptr
-import numpy as np
+from ctypes import cdll
 
 try:
-    lib = ctypes.cdll.LoadLibrary('./say.so')
+    lib = cdll.LoadLibrary('./hydro.so')
     #length = 700
     #heads = np.identity(length, dtype = np.single)
     #queue = np.zeros((length,length), dtype = np.single)
     #lib.getQueue1Dptr(ptr(heads.ctypes.data),ptr(queue.ctypes.data),length,length)
-
+    print("say.so successfully loaded")
 except:
     print('Module not loaded')
 
-lib = ctypes.cdll.LoadLibrary('./say.so')
+print("made it to the end")
 
 #getQueue(heads,queue, length, length)
 '''
