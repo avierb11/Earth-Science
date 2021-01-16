@@ -1,3 +1,7 @@
+#include <iostream>
+#include <chrono>
+using namespace std::chrono;
+
 extern "C" void getQueue1Dptr(float *heads, float *queue, int length, int stride)
 {
   int depth = length/stride;
@@ -63,4 +67,61 @@ extern "C" void getQueue1Dptr(float *heads, float *queue, int length, int stride
   queue[sizeIndex] =  heads[sizeIndex - stride] - heads[sizeIndex];
   queue[sizeIndex] += heads[sizeIndex - 1] - heads[sizeIndex];
 
+}
+
+void markSides(float *x, int length, int stride)
+{
+
+}
+
+void printArray(float *x, int length, int stride)
+{
+  int depth = length/stride;
+  for (int i = 0; i < depth; i++)
+  {
+    for (int j = 0; j < stride; j++)
+    {
+      std::cout << x[stride*i + j] << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+int main()
+{
+  int length = 16384 * 2;
+  int arrLength = length*length;
+  float *x = new float [length*length];
+  for (int i = 0; i < length*length; i++)
+  {
+    x[i] = 0.0;
+  }
+  for (int i = 0; i < length; i++)
+  {
+    x[i*length + i] = 1.0;
+  }
+
+  float *y = new float [length*length];
+  for (int i = 0; i < length*length; i++)
+  {
+    y[i] = 0.0;
+  }
+
+  auto start = high_resolution_clock::now();
+  for (int i = 0; i < 3; i++)
+  {
+    getQueue1Dptr(x,y,arrLength,length);
+  }
+  auto stop = high_resolution_clock::now();
+
+  auto duration = duration_cast<microseconds>(stop - start);
+  float time = (float)duration.count()/1000000.0f;
+  std::cout << "Total execution time C++ only: " << time << std::endl;
+
+
+
+  std::cout << "made it to the end" << std::endl;
+
+
+  return 0;
 }
