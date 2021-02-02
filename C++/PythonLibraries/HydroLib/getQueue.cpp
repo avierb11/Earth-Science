@@ -69,11 +69,6 @@ extern "C" void getQueue1Dptr(float *heads, float *queue, int length, int stride
 
 }
 
-void markSides(float *x, int length, int stride)
-{
-
-}
-
 void printArray(float *x, int length, int stride)
 {
   int depth = length/stride;
