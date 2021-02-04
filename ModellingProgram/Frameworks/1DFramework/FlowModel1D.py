@@ -3,7 +3,10 @@ import numpy as np
 
 class FlowModel:
 
-    def __init__(self, length = 10, numElements = 10, conductivity = .01, diffusivity = .05, dispersivity = .1, timeDelta = 1, porosity = .25):
+    # Initialization
+    #---------------------------------------------------------------------------
+    def __init__(self, length = 10, numElements = 10, conductivity = .01,
+    diffusivity = .05, dispersivity = .1, timeDelta = 1, porosity = .25, terrain = True):
         self.length = length
         self.numElements = numElements
         self.conductivity = conductivity
@@ -20,28 +23,47 @@ class FlowModel:
         self.timeDelta = timeDelta
         self.porosity = porosity
         self.pointConstants = []
+        self.pointChanges = []
         self.queueChanges = []
         self.pointConcentrations = []
         self.averageVelocity = 0
+        if terrain:
+            self.terrain = np.full(numElements, 1, dtype = np.single)
+            self.terrainOn = True
+        else:
+            self.terrain = None
+            self.terrainOn = False
+        self.trackConcentrationPoints = []
 
 
     # Flow Functions
     #---------------------------------------------------------------------------
-    def flow(self, iters = 1, toSteadyState = False, tolerance = 1e-8):
+    def flow(self, iters = 1, toSteadyState = False, tolerance = 1e-8, time = None):
         '''
         Simple flow function, uses the mod values.
         Also includes flowing to steady state
         '''
+        if time != None:
+            iters = int(self.timeDelta)
+            if iters == 0:
+                iters = 1
+
         mult = (self.timeDelta*self.conductivity)/self.scale
         #print("mult:",mult)
 
         if not toSteadyState:
-            self.queue[:-1] += mult*(self.heads[1: ] - self.heads[:-1])
-            self.queue[1: ] += mult*(self.heads[:-1] - self.heads[1: ])
-            #print("queue:",queue)
-            self.heads += self.queue
-            self.queue = np.zeros(self.numElements)
-            #print("New heads:",heads)
+            for i in range(iters):
+                for el in self.pointConstants:
+                    self.heads[el[0]] = el[1]
+                for el in self.pointChanges:
+                    self.heads[el[0]] += el[1]
+                temp = mult*(self.heads[1: ] - self.heads[:-1])
+                self.queue[:-1] += temp
+                self.queue[1: ] -= temp
+                #print("queue:",queue)
+                self.heads += self.queue
+                self.queue = np.zeros(self.numElements)
+                #print("New heads:",heads)
 
         if toSteadyState:
             previous_sum = 1000000
@@ -60,7 +82,6 @@ class FlowModel:
                 self.queue = np.zeros(self.numElements)
 
         self.updateAverageVelocity()
-
 
     # Flow related things
     #---------------------------------------------------------------------------
@@ -121,18 +142,18 @@ class FlowModel:
             self.concentrations += queue
             del queue
 
-    def forceAdvection(self):
-        queue = np.copy(self.concentrations[:-1])
-        self.concentrations[:-1] -= queue
-        self.concentrations[1:] += queue
-        del queue
-
     def diffusion(self, runs = 1):
         for i in range(runs):
             queue = self.concentrations*self.diffusivity*self.timeDelta
             self.concentrations -= 2*queue
             self.concentrations[:-1] += queue[1: ]
             self.concentrations[1: ] += queue[:-1]
+
+    def forceAdvection(self):
+        queue = np.copy(self.concentrations[:-1])
+        self.concentrations[:-1] -= queue
+        self.concentrations[1:] += queue
+        del queue
 
     def dispersion(self):
         dispersiveCoefficients = self.dispersivity*self.averageVelocity()
@@ -164,24 +185,32 @@ class FlowModel:
 
     # Plotting things
     #---------------------------------------------------------------------------
-    def plotHeads(self):
+    def plotHeads(self, terrain = True):
         self.plt.figure(1)
         self.plt.plot(np.linspace(0,self.length,self.numElements),self.heads)
+        if terrain:
+            if self.terrainOn:
+                self.plt.plot(np.linspace(0,self.length,self.numElements), self.terrain,
+                color = 'black', alpha = .7)
         self.plt.xlim(0,self.length)
         self.plt.xlabel("Length")
         self.plt.title("Hydraulic head over the model")
         self.plt.ylabel("Hydraulic head")
         self.plt.show()
 
-    def plotConc(self):
+    def plotConc(self, terrain = True):
         self.plt.figure(1)
-        self.plt.plot(np.linspace(0,length,self.numElements),self.concentrations)
+        self.plt.plot(np.linspace(0,self. length,self.numElements),self.concentrations)
+        if terrain:
+            if self.terrainOn:
+                self.plt.plot(np.linspace(0,self.length,self.numElements), self.terrain,
+                color = 'black', alpha = .7)
         self.plt.xlim(0,self.length)
         self.plt.xlabel("X position")
         self.plt.ylabel("Solute Concentration")
         self.plt.title("Solute Concentration in the model")
         self.plt.ylim(0,1)
-        self.plt.xlim(0, length)
+        self.plt.xlim(0, self.length)
         self.plt.show()
 
     def showQueueChanges(self):
@@ -231,31 +260,54 @@ class FlowModel:
         self.plt.title("Solute concentration over time")
         self.plt.show()
 
-    def contaminantTransport(self):
+    def trackContaminantTransport(self, time = 100):
         '''
         Determines the time that a contaminant should take to reach
         a given point.
         '''
-        # First, determine the average Darcy velocity
-        pass
+        # 0. Determine the number of time steps
+        iterations = int(time/self.timeDelta)
+
+        # 1. Create an array for tracking the concentrations
+        self.concentrationArray = np.zeros((len(self.trackConcentrationPoints),iterations), dtype = np.single)
+
+        # 2. Run the solute flow functions
+
+        # 3. Record the solute concentration at each location
+
+        # 4. Maybe some data processing?
 
 
     # Altering the environment
     #---------------------------------------------------------------------------
-    def addWell(self,pos,pumpOut):
-        '''Adds a well point change'''
-        pass
+    def addWell(self, element = 0, location = None, pumpOut = .1):
+        '''
+        Adds a well point change.
+        pumpOut is the value removed at each step.
+        pumpOut can be positive or negative, it wil be
+        entered as a negative value either way to try to
+        reduce some confusion.
+        '''
+        if (isinstance(pumpOut, float) or isinstance(pumpOut, int)) and isinstance(element, int):
+            self.pointChanges.append((element,-abs(pumpOut)))
+        else:
+            print('This function is not yet available')
 
-    def addPump(self,pos,pumpIn):
-        '''Adds a pump that pumps water into the ground'''
-        pass
+    def addPump(self, element = 0, location = None, pumpIn = .1):
+        '''
+        Adds a pump that pumps water into the ground
+        Functions just like addwell, where you can specify
+        a positive or negative number for pumpIn and it will
+        always be positive.
+        '''
+        if (isinstance(pumpIn, float) or isinstance(pumpIn, int)) and isinstance(element, int):
+            self.pointChanges.append((element,abs(pumpIn)))
+        else:
+            print('This function is not yet available')
 
 
     # Weather events
     #---------------------------------------------------------------------------
-    def rain(self, amount = .1):
-        '''Simulates rain. A constant value of water enters the ground.'''
-        pass
 
 
     # Printing information and things
@@ -301,3 +353,19 @@ class FlowModel:
             self.heads[el[0]] = el[1]
         for el in self.pointConcentrations:
             self.concentrations[el[0]] = el[1]
+
+    # Saving related things here
+    #---------------------------------------------------------------------------
+    def saveModel(self):
+        import pickle
+        pickle.dump(self,open("./FlowModel1D.txt","wb"))
+
+
+'''
+--------------------------------------------------------------------------------
+Stuff to add in:
+- Rain/precipitation events
+- A terrain line w/ terrain functionality (the hydraulic head cannot go higher
+    than the terrain)
+- Saving functionality - saving and loading a model.
+'''
