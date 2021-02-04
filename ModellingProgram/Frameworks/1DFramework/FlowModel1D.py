@@ -34,6 +34,7 @@ class FlowModel:
             self.terrain = None
             self.terrainOn = False
         self.trackConcentrationPoints = []
+        self.atSteadyState = False
 
 
     # Flow Functions
@@ -81,6 +82,8 @@ class FlowModel:
                 self.heads += self.queue
                 self.queue = np.zeros(self.numElements)
 
+            self.atSteadyState = True
+
         self.updateAverageVelocity()
 
     # Flow related things
@@ -127,7 +130,7 @@ class FlowModel:
 
     # Solute Transport
     #---------------------------------------------------------------------------
-    def advection(self):
+    def advectionSimple(self):
         '''
         Models advection, the transport of solute with the bulk fluid motion
         - Follows the motion of the largest
@@ -141,6 +144,26 @@ class FlowModel:
             queue[1: ] += (self.concentrations[1: ] - self.concentrations[:-1])
             self.concentrations += queue
             del queue
+
+    def advection(self):
+        '''
+        The full advection now that tracks motion across the whole array of
+        concentration elements instead of just following the solute peak
+        '''
+        # 1. Get average velocity over heads array
+        q = self.conductivity*(self.heads[:-1] - self.heads[1: ])
+        avgV = q/self.porosity
+
+        # 2. Deterimine the proportion of one element that flows into another
+        distance = avgV*self.timeDelta
+        proportion = distance/self.scale
+
+        # 3. Apply the proportion
+        self.concentrations[:-1] -= proportion
+        self.concentrations[1: ] += proportion
+
+        del proportion
+        del avgV
 
     def diffusion(self, runs = 1):
         for i in range(runs):
@@ -266,14 +289,20 @@ class FlowModel:
         a given point.
         '''
         # 0. Determine the number of time steps
-        iterations = int(time/self.timeDelta)
+        iters = int(time/self.timeDelta)
 
         # 1. Create an array for tracking the concentrations
         self.concentrationArray = np.zeros((len(self.trackConcentrationPoints),iterations), dtype = np.single)
 
         # 2. Run the solute flow functions
+        for i in range(iters):
+            # 2a. Run solute evolution functions
+            self.advection()
+            self.diffusion()
 
-        # 3. Record the solute concentration at each location
+            # 2b. Record the solute concentration at each location
+            for j in range(len(self.trackPointConcentrations)):
+                self.concentrationArray[j,i] = self.concentrations[self.trackPointConcentrations[j]]
 
         # 4. Maybe some data processing?
 
@@ -304,6 +333,12 @@ class FlowModel:
             self.pointChanges.append((element,abs(pumpIn)))
         else:
             print('This function is not yet available')
+
+
+    # Altering the environment
+    #---------------------------------------------------------------------------
+    def addMeasureConcentrationPoint(self, element):
+        self.trackConcentrationPoints.append(element)
 
 
     # Weather events
