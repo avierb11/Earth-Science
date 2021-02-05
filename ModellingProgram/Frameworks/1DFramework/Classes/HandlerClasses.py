@@ -22,7 +22,8 @@ class GroundwaterHandler:
     def __init__(self, model):
         self.model = model
 
-    def flow(self, iters = 1, time = None, toSteadyState = False):
+    def flow(self, track = False, step = None, iters = 1, time = None, toSteadyState = False):
+
         if not toSteadyState:
             for i in range(iters):
                 self.applyPointChanges()
@@ -31,6 +32,14 @@ class GroundwaterHandler:
                 self.model.queue[1: ] -= self.model.conductivity*self.model.timeDelta*vals
                 self.model.heads += self.model.queue
                 self.model.queue = np.zeros(self.model.heads.size, dtype = np.single)
+
+                if track and (i % step == 0):
+                    self.model.Data.addDataPoint()
+
+                self.model.time += self.model.timeDelta
+
+            if track:
+                self.model.Data.addDataPoint()
 
         elif toSteadyState:
             print('Flowing to steady state is not yet implemented')
@@ -73,6 +82,13 @@ class GraphHandler:
         self.plt.ylim(0)
         self.plt.show()
 
+    def plotFlowData(self):
+        self.plt.figure(1)
+        for curve in self.model.Data.flowPoints:
+            self.plt.plot(self.model.lengthPoints,curve.data, label = "time: {} days".format(curve.time))
+        self.plt.legend()
+        self.plt.show()
+
 class ContaminantHandler:
 
     def __init__(self):
@@ -93,3 +109,12 @@ class WeatherHandler:
 
         for i in range(steps):
             self.model.heads += rainPerStep
+
+class DataHandler:
+
+    def __init__(self, model):
+        self.model = model
+        self.flowPoints = []  # Add a new data class to this each time probably
+
+    def addDataPoint(self):
+        self.flowPoints.append(ModelSnapshot(self.model.time, np.copy(self.model.heads)))

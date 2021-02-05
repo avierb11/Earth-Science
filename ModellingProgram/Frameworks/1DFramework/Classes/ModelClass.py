@@ -17,6 +17,7 @@ class FlowModel:
         self.timeDelta = timeDelta
         self.scale = length/numElements
         self.time = 0   # Measures the total time from the inception of the model
+        self.lengthPoints = np.linspace(0,length,numElements)
 
         # Groundwater things
         self.conductivity = conductivity
@@ -30,12 +31,13 @@ class FlowModel:
         self.Groundwater = GroundwaterHandler(self)
         self.Grapher = GraphHandler(plt,self)
         self.Weather = WeatherHandler(self)
+        self.Data = DataHandler(self)
 
     def plotHeads(self):
         self.Grapher.plotHeads()
 
-    def flow(self, iters = 1, track):
-        self.Groundwater.flow(iters)
+    def flow(self, iters = 1, track=False, step = 1):
+        self.Groundwater.flow(track = track, step = step, iters = iters)
 
     def __str__(self):
         print("\n")
