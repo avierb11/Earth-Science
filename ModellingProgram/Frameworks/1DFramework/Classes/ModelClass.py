@@ -10,11 +10,13 @@ from Subclasses import *
 
 class FlowModel:
     def __init__(self, name = "Unnamed flow model", length = 10, numElements = 10, timeDelta = 1, conductivity = .1, specificStorage = .25, porosity = .25):
+        # Basic elements
         self.length = length
         self.name = name
         self.numElements = numElements
         self.timeDelta = timeDelta
         self.scale = length/numElements
+        self.time = 0   # Measures the total time from the inception of the model
 
         # Groundwater things
         self.conductivity = conductivity
@@ -32,7 +34,7 @@ class FlowModel:
     def plotHeads(self):
         self.Grapher.plotHeads()
 
-    def flow(self, iters = 1):
+    def flow(self, iters = 1, track):
         self.Groundwater.flow(iters)
 
     def __str__(self):

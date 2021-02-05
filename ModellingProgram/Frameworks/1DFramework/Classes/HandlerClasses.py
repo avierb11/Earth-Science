@@ -53,6 +53,7 @@ class GroundwaterHandler:
             if self.model.heads[element.xPos] < 0:
                 self.model.heads[element.xPos] = 0
 
+
     def setDefaults(self):
         self.model.pointChanges.append(Pump(0,.1))
         self.model.pointChanges.append(Well(self.model.numElements-1,.1))
