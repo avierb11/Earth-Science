@@ -5,8 +5,7 @@ class FlowModel:
 
     # Initialization
     #---------------------------------------------------------------------------
-    def __init__(self, length = 10, numElements = 10, conductivity = .01,
-    diffusivity = .05, dispersivity = .1, timeDelta = 1, porosity = .25, terrain = True):
+    def __init__(self, length = 10, numElements = 10, conductivity = .01,diffusivity = .05, dispersivity = .1, timeDelta = 1, porosity = .25, terrain = True):
         self.length = length
         self.numElements = numElements
         self.conductivity = conductivity
@@ -72,6 +71,9 @@ class FlowModel:
             difference = abs(previous_sum - current_sum)
 
             while difference > tolerance:
+                for point in self.pointConstants:
+                    self.heads[point[0]] = point[1]
+
                 self.queue[:-1] = mult*(self.heads[1: ] - self.heads[:-1])
                 self.queue[1: ] = mult*(self.heads[:-1] - self.heads[1: ])
 
@@ -292,7 +294,7 @@ class FlowModel:
         iters = int(time/self.timeDelta)
 
         # 1. Create an array for tracking the concentrations
-        self.concentrationArray = np.zeros((len(self.trackConcentrationPoints),iterations), dtype = np.single)
+        self.concentrationArray = np.zeros((len(self.trackConcentrationPoints),iters), dtype = np.single)
 
         # 2. Run the solute flow functions
         for i in range(iters):
@@ -301,10 +303,17 @@ class FlowModel:
             self.diffusion()
 
             # 2b. Record the solute concentration at each location
-            for j in range(len(self.trackPointConcentrations)):
-                self.concentrationArray[j,i] = self.concentrations[self.trackPointConcentrations[j]]
+            for j in range(len(self.trackConcentrationPoints)):
+                self.concentrationArray[j,i] = self.concentrations[self.trackConcentrationPoints[j]]
 
-        # 4. Maybe some data processing?
+        # 4. Plotting stuff
+        self.plt.figure(1)
+        for i in range(self.concentrationArray.shape[0]):
+            self.plt.plot(self.concentrationArray[i], label = "Location: {}".format(self.trackConcentrationPoints[i]))
+        self.plt.xlabel("Iterations")
+        self.plt.ylabel("Solute concentration")
+        self.plt.title("Solute concentration at multiple points")
+        self.plt.show()
 
 
     # Altering the environment
@@ -394,6 +403,42 @@ class FlowModel:
     def saveModel(self):
         import pickle
         pickle.dump(self,open("./FlowModel1D.txt","wb"))
+
+
+class ModelHandler:
+    def __init__(self, length = 10, numElements = 10, timeDelta = 1):
+        self.length = length
+        self.numElements = numElements
+        self.timeDelta = timeDelta
+        self.scale = length/numElements
+        self.Groundwater = GroundWaterHandler(numElements)
+
+
+class GroundwaterHandler:
+    '''
+    To handle the water-related things
+    '''
+    def __init__(self, numElements, conductivity = .1, specificStorage = .25, porosity = .25):
+        self.heads = np.zeros(numElements, dtype = np.single)
+        self.queue = np.zeros(numElements, dtype = np.single)
+        self.conductivity = conductivity
+        self.specificStorage = specificStorage
+        self.porosity = porosity
+
+    def flow(self, timeDelta, iters = 1, time = None, toSteadyState = False):
+        if not toSteadyState:
+            for i in range(iters):
+                vals = self.heads[1: ] - self.heads[:-1]
+                self.queue[:-1] += self.conductivity*timeDelta*vals
+                self.queue[1: ] -= self.conductivity*timeDelta*vals
+                self.heads += self.queue
+                self.queue = np.zeros(self.heads.size, dtype = np.single)
+
+        elif toSteadyState:
+            print('Flowing to steady state is not yet implemented')
+
+    def getAverageVelocities(self, scale):
+        return = (self.conductivity/(self.porosity*scale))*(self.heads[:-1] - self.heads[1: ])
 
 
 '''
