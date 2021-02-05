@@ -25,6 +25,7 @@ class GroundwaterHandler:
     def flow(self, iters = 1, time = None, toSteadyState = False):
         if not toSteadyState:
             for i in range(iters):
+                self.applyPointChanges()
                 vals = self.model.heads[1: ] - self.model.heads[:-1]
                 self.model.queue[:-1] += self.model.conductivity*self.model.timeDelta*vals
                 self.model.queue[1: ] -= self.model.conductivity*self.model.timeDelta*vals
@@ -43,6 +44,15 @@ class GroundwaterHandler:
     def addWell(self, xPos, change):
         self.model.pointChanges.append(Well(xPos, change))
 
+    def applyPointChanges(self):
+        '''
+        Apply all of the wells and pumps to the model.
+        '''
+        for element in self.model.pointChanges:
+            self.model.heads[element.xPos] += element.change
+            if self.model.heads[element.xPos] < 0:
+                self.model.heads[element.xPos] = 0
+
     def setDefaults(self):
         self.model.pointChanges.append(Pump(0,.1))
         self.model.pointChanges.append(Well(self.model.numElements-1,.1))
@@ -60,5 +70,10 @@ class GraphHandler:
         self.plt.ylabel("Hydraulic head (m)")
         self.plt.title("Hydraulic head over the model")
         self.plt.xlim(0, self.model.length)
-        self.plt.ylim(0, 1)
+        self.plt.ylim(0)
         self.plt.show()
+
+class ContaminantHandler:
+
+    def __init__(self):
+        pass

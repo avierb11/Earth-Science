@@ -28,22 +28,11 @@ class FlowModel:
         self.Groundwater = GroundwaterHandler(self)
         self.Grapher = GraphHandler(plt,self)
 
-    def SetDefaults(self):
-        self.Groundwater.addPump(0, .1)
-        self.GroundWater.addWell(self.Length,-.1)
-
     def plotHeads(self):
         self.Grapher.plotHeads()
 
     def flow(self, iters = 1):
         self.Groundwater.flow(iters)
-
-    def applyPointChanges(self):
-        '''
-        Apply all of the wells and pumps to the model.
-        '''
-        pass
-
 
     def __str__(self):
         print("\n")

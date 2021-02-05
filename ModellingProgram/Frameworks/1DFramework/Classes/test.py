@@ -9,5 +9,5 @@ mod = FlowModel(name="My first model")
 print(mod)
 
 mod.Groundwater.setDefaults()
-mod.flow()
+mod.flow(iters = 100)
 mod.plotHeads()
