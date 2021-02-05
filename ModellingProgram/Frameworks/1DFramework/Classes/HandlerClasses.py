@@ -57,7 +57,6 @@ class GroundwaterHandler:
         self.model.pointChanges.append(Pump(0,.1))
         self.model.pointChanges.append(Well(self.model.numElements-1,.1))
 
-
 class GraphHandler:
 
     def __init__(self, plt, model):
@@ -77,3 +76,19 @@ class ContaminantHandler:
 
     def __init__(self):
         pass
+
+class WeatherHandler:
+
+    def __init__(self, model):
+        self.model = model
+
+    def rain(self, duration = 1, total = .1):
+        '''
+        Simple rain function. The rain is constant over
+        the whole model.
+        '''
+        steps = int(duration / self.model.timeStep)
+        rainPerStep = total / steps
+
+        for i in range(steps):
+            self.model.heads += rainPerStep

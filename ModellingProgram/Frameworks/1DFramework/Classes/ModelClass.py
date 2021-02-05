@@ -27,6 +27,7 @@ class FlowModel:
         # The function classes
         self.Groundwater = GroundwaterHandler(self)
         self.Grapher = GraphHandler(plt,self)
+        self.Weather = WeatherHandler(self)
 
     def plotHeads(self):
         self.Grapher.plotHeads()
@@ -38,7 +39,9 @@ class FlowModel:
         print("\n")
         print("   ",self.name)
         print(" ","-------------------------")
-        print("   ","Conductivity:",self.conductivity)
+        print("   ","Conductivity:",self.conductivity, "m/day")
         print("   ","Porosity:",self.porosity)
         print("   ","Specific storage:",self.specificStorage)
+        print("   ","Scale:", self.scale, "meters per element")
+        print("   ","Time step:",self.timeDelta,"days per time step")
         return ""
