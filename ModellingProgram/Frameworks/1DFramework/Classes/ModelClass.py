@@ -32,6 +32,7 @@ class FlowModel:
         self.Grapher = GraphHandler(plt,self)
         self.Weather = WeatherHandler(self)
         self.Data = DataHandler(self)
+        self.Geography = GeographyHandler(self)
 
     def plotHeads(self):
         self.Grapher.plotHeads()
