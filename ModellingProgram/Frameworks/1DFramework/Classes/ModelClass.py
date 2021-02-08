@@ -27,12 +27,19 @@ class FlowModel:
         self.queue = np.zeros(numElements, dtype = np.single)
         self.pointChanges = []
 
+        # DataHandler stuff
+        self.flowPoints = []
+        self.queueChangePoints = []
+
         # The function classes
         self.Groundwater = GroundwaterHandler(self)
         self.Grapher = GraphHandler(plt,self)
         self.Weather = WeatherHandler(self)
         self.Data = DataHandler(self)
         self.Geography = GeographyHandler(self)
+
+        # Geography Stuff
+        
 
     def plotHeads(self):
         self.Grapher.plotHeads()

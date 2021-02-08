@@ -103,7 +103,7 @@ class GraphHandler:
     def plotHeads(self, other = True):
         self.plt.plot(np.linspace(0,self.model.length,self.model.numElements), self.model.heads, color = 'blue', label = "Hydraulic head")
         if other:
-            self.plt.plot(np.linspace(0,self.model.length,self.model.numElements), self.model.Geography.terrain, color = 'black', label = 'Terrain')
+            self.plt.plot(np.linspace(0,self.model.length,self.model.numElements), self.model.terrain, color = 'black', label = 'Terrain')
 
             # Adding wells and stuff
             for point in self.model.pointChanges:
@@ -119,7 +119,7 @@ class GraphHandler:
 
     def plotFlowData(self):
         self.plt.figure(1)
-        for curve in self.model.Data.flowPoints:
+        for curve in self.model.flowPoints:
             self.plt.plot(self.model.lengthPoints,curve.data, label = "time: {} days".format(curve.time))
         self.plt.legend()
         self.plt.title(self.model.name)
@@ -167,27 +167,25 @@ class DataHandler:
 
     def __init__(self, model):
         self.model = model
-        self.flowPoints = []  # Add a new data class to this each time probably
         self.flowPointsIsActive = True
-        self.queueChangePoints = []
         self.queueChangePointsIsActive = True
 
     def addDataPoint(self):
-        self.flowPoints.append(ModelSnapshot(self.model.time, np.copy(self.model.heads)))
+        self.model.flowPoints.append(ModelSnapshot(self.model.time, np.copy(self.model.heads)))
 
     def measureQueueChange(self):
-        for point in self.queueChangePoints:
+        for point in self.model.queueChangePoints:
             point.record()
 
     def addQueueChangePoint(self, xPos):
-        self.queueChangePoints.append(QueueChangePoint(xPos, self.model))
+        self.model.queueChangePoints.append(QueueChangePoint(xPos, self.model))
 
 
 class GeographyHandler:
 
     def __init__(self, model):
         self.model = model
-        self.terrain = np.ones(self.model.numElements, dtype = np.single)
+        self.model.terrain = np.ones(self.model.numElements, dtype = np.single)
 
     def determineReservoirSize(self):
         '''

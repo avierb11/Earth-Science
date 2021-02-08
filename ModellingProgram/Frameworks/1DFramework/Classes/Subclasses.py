@@ -7,7 +7,7 @@ class Well:
         self.name = name
         self.model = model
         self.xPos = xPos
-        self.yPos = self.model.Geography.terrain[xPos]
+        self.yPos = self.model.terrain[xPos]
         self.change = -abs(change)
         self.total = 0
         self.isActive = isActive
@@ -21,7 +21,7 @@ class Well:
 
     def record(self):
         if self.isActive:
-            self.data.append((self.model.timeDelta, self.model.Groundwater.heads[self.xPos]))
+            self.data.append((self.model.timeDelta, self.model.heads[self.xPos]))
 
 class Pump:
 
@@ -29,7 +29,7 @@ class Pump:
         self.type = "Pump"
         self.model = model
         self.xPos = xPos
-        self.yPos = self.model.Geography.terrain[xPos]
+        self.yPos = self.model.terrain[xPos]
         self.change = abs(change)
         self.total = 0
         self.isActive = isActive
