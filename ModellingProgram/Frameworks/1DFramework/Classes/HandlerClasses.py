@@ -25,6 +25,7 @@ class GroundwaterHandler:
 
     def flow(self, track = False, step = None, iters = 1, time = None, toSteadyState = False):
 
+        multiplier = (self.model.conductivity * self.model.timeDelta)/self.model.specificStorage
         if not toSteadyState:
             for i in range(iters):
 
@@ -34,8 +35,8 @@ class GroundwaterHandler:
                 # Applies points from wells and pumps
                 self.preprocessing()
                 vals = self.model.heads[1: ] - self.model.heads[:-1]
-                self.model.queue[:-1] += self.model.conductivity*self.model.timeDelta*vals
-                self.model.queue[1: ] -= self.model.conductivity*self.model.timeDelta*vals
+                self.model.queue[:-1] += self.model.conductivity * self.model.timeDelta*vals
+                self.model.queue[1: ] -= self.model.conductivity * self.model.timeDelta*vals
                 self.model.heads += self.model.queue
 
                 if recordValues:

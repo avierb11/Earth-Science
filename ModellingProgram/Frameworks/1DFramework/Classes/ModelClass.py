@@ -9,7 +9,7 @@ from Subclasses import *
 
 
 class FlowModel:
-    def __init__(self, name = "Unnamed flow model", length = 10, numElements = 10, timeDelta = 1, conductivity = .1, specificStorage = .25, porosity = .25):
+    def __init__(self, name = "Unnamed flow model", length = 10, numElements = 10, timeDelta = 1, conductivity = .001, specificStorage = .005, porosity = .25):
         # Basic elements
         self.length = length
         self.name = name
@@ -39,7 +39,7 @@ class FlowModel:
         self.Geography = GeographyHandler(self)
 
         # Geography Stuff
-        
+
 
     def plotHeads(self):
         self.Grapher.plotHeads()
