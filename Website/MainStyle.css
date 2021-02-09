@@ -1,8 +1,24 @@
-head {
-    background-color: blue;
-}
+
 
 body {
     font-family: "Lucida Console", "Courier New", monospace;
-    background-color: goldenrod;
+    background-color: darkkhaki;
+}
+
+h1 {
+    background-color: CadetBlue;
+    color: AliceBlue;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+p.main {
+    background-color: CadetBlue;
+    color: AliceBlue;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.container {
+    backgtround-color: cadetblue;
 }
