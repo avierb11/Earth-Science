@@ -6,10 +6,11 @@ def flow(heads, conductivity, specificYield, timeDelta, scale, variableParameter
     vals = np.copy(heads[:-1] - heads[1: ])
     queue = np.zeros(heads.size)
     mult = (conductivity * timeDelta) / (specificYield * scale * scale)
-    if not variableParameter:
-        heads[1: ] += mult*vals[1: ]
-        heads[:-1] += mult*vals[:-1]
-    elif variableParameter:
+    if not variableParameters:
+        queue[1: ] += mult*(heads[:-1] - heads[1: ])
+        queue[:-1] += mult*(heads[1: ] - heads[:-1])
+        heads += queue
+    elif variableParameters:
         heads[1: ] += mult[1: ]*heads[1: ]
         heads[:-1] += mult[:-1]*heads[:-1]
     del queue
