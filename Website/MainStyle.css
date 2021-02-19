@@ -1,4 +1,8 @@
 
+html *
+{
+  font-family: "Lucida Console", "Courier New", monospace !important;
+}
 
 body {
     font-family: "Lucida Console", "Courier New", monospace;
@@ -21,4 +25,23 @@ p.main {
 
 .container {
     backgtround-color: cadetblue;
+}
+
+
+/*Some sidebar stuff*/
+.topnav {
+  font-family: "Lucida Console", "Courier New", monospace;
+  background-color: darkkhaki;
+  overflow: hidden;
+}
+/* Change the color of links on hover */
+.topnav a:hover {
+  background-color: khaki;
+  color: black;
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+  background-color: green;
+  color:white;
 }
