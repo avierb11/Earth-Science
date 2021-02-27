@@ -1,3 +1,8 @@
+"""
+This module contains the functions that will be used in the full modelling
+program.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
